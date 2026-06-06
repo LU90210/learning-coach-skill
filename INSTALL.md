@@ -3,35 +3,41 @@
 ## 通用准备
 
 ```bash
-# 创建学习根目录
-mkdir -p ~/reading/learning
-
-# 克隆本仓库（用于获取最新 SKILL.md）
+# 克隆本仓库
 git clone https://github.com/<your-username>/learning-coach-skill.git ~/learning-coach-skill
+
+# 配置路径（不用再手改 SKILL.md）
+mkdir -p ~/.config/learning-coach
+cat > ~/.config/learning-coach/config.json <<'EOF'
+{
+  "reading_root": "/你的/学习状态目录",
+  "vault_root": "/你的/Obsidian/vault（不用 KB 就删掉这一行）"
+}
+EOF
 ```
 
-如果启用 Obsidian KB 集成，把 SKILL.md 里所有 `<OBSIDIAN_VAULT_ROOT>` 替换为你的 vault 绝对路径：
+- 不写 `reading_root` 或整个 config → 默认 `~/reading`
+- 不写 `vault_root` → 自动跳过 Obsidian KB 集成，其余协议照常
+- 学习根目录由 skill 启动时自动创建，无需手动 `mkdir`
 
-```bash
-# macOS 例子
-sed -i '' 's|<OBSIDIAN_VAULT_ROOT>|/Users/yourname/Library/Mobile Documents/iCloud~md~obsidian/Documents/YourVault|g' ~/learning-coach-skill/SKILL.md
-
-# Linux
-sed -i 's|<OBSIDIAN_VAULT_ROOT>|/home/yourname/Documents/Obsidian/YourVault|g' ~/learning-coach-skill/SKILL.md
-```
-
-不使用 Obsidian：删掉 SKILL.md 里的"Obsidian 知识库路径"段、"处理知识库入库"段、以及 meta.json 模板里的 `knowledge_base` 字段即可。
+SKILL.md 启动时读这个 config 拿路径，所以仓库文件保持通用、可直接 `git pull` 更新，私人路径不进仓库。
 
 ---
 
 ## Claude Code（推荐）
 
+软链到仓库，仓库一更新就生效，避免多份拷贝漂移：
+
 ```bash
-mkdir -p ~/.claude/skills/learning-coach
-cp ~/learning-coach-skill/SKILL.md ~/.claude/skills/learning-coach/SKILL.md
+ln -sfn ~/learning-coach-skill ~/.claude/skills/learning-coach
 ```
 
 测试：在任意 Claude Code session 里说 "开始读《XXX》" 或 "我想学 XXX"，skill 应自动触发。
+
+> 排障：若某次 skill 管理工具（如 `npx skills` 重装）把 `~/.claude/skills/` 下的软链清掉、导致不再自动触发，重建一行即可，内容和 config 都不丢：
+> ```bash
+> ln -sfn ~/learning-coach-skill ~/.claude/skills/learning-coach
+> ```
 
 ## Codex CLI
 
@@ -70,6 +76,8 @@ codex --system-prompt-file ~/learning-coach-skill/SKILL.md
 
 **测试 2（不误触发）**：说 "帮我看一下这个函数有没有 bug"。预期：skill 不触发，正常进入代码任务。
 
-**测试 3（续读）**：写完 lesson_01 的"我的思考"后另开 session 说 "继续读"。预期：skill 触发，ls `~/reading/learning/` 列出已有材料，读 meta.json + 最新 lesson 文件，生成 lesson_02。
+**测试 3（续读）**：写完 lesson_01 的"我的思考"后另开 session 说 "继续读"。预期：skill 触发，读 config 拿 reading_root，ls `<reading_root>/learning/` 列出已有材料，读 meta.json + 最新 lesson 文件，生成 lesson_02。
 
 **测试 4（跨 agent）**：Claude Code 写到 lesson_03 → Codex 启动加载 SKILL.md → 说 "继续读 <slug>"。预期：行为一致，能读到本地文件并续写。
+
+**测试 5（短指令）**：学习中说 "改成快读"。预期：后续 lesson 变短，且 meta.json 的 `user_profile.depth_preference` 改为 `skim`。
