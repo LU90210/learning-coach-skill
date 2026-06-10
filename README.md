@@ -4,6 +4,10 @@
 
 > An interactive reading coach skill for AI agents. Designed in Chinese, works with any agent that supports custom system prompts (Claude Code, Codex, Cursor, ChatGPT, etc.).
 
+## 架构图
+
+![learning-coach 架构白板：状态在文件，节奏靠证据](docs/architecture.png)
+
 ## 核心机制
 
 - **逐篇分发**：AI 把材料拆成"独立知识单元"（不是按原章节），每篇 5–15 分钟阅读量
@@ -16,10 +20,6 @@
 - **碰撞式提问**（v3）：自测题可走"作者最想让你接受 X，你接受吗？"——接受则压最强反驳，不接受则三步定位，复用逐题批改机制
 - **间隔重复防遗忘**（v3）：答错 / 勉强的题进 `weak_items`，隔几篇自动"回炉"重考
 - **质量硬约束 + 自省**（v3）：每篇必含图 / 表 + 类比；coach 每到 checkpoint 自评"节奏判断准不准"，可审计自纠
-
-## 架构图
-
-![learning-coach 架构白板：状态在文件，节奏靠证据](docs/architecture.png)
 
 ## 文件布局
 
